@@ -1,0 +1,221 @@
+//%attributes = {"lang":"en"} comment added and reserved by 4D.
+If (False)//Description
+// ----------------------------------------------------
+// Developer: James Borillo
+// Date and time: 13.05.2016 at 10:02
+// ----------------------------------------------------
+// 
+End if 
+
+If (True)//Declarations and initialization of variables
+C_OBJECT($1)
+C_OBJECT($o_params)
+C_BOOLEAN($0)
+C_OBJECT($o_error)
+C_OBJECT($o_request)
+C_TEXT($response)
+
+$o_params:=$1
+
+C_OBJECT($o_template_content)
+C_OBJECT($o_message)
+C_OBJECT($o_to)
+C_OBJECT($o_headers)
+C_OBJECT($o_attachments)
+
+C_TEXT($mndrl_template)// optional
+C_TEXT($mndrl_html)// optional
+C_TEXT($mndrl_text)// optional
+
+C_TEXT($mndrl_subject)
+C_TEXT($mndrl_email)
+C_TEXT($mndrl_bcc_address)// optional
+C_TEXT($mndrl_reply_to)// optional
+C_TEXT($mndrl_b64_attachment)// optional
+C_TEXT($mndrl_attachment_filename)// optional
+C_TEXT($mndrl_attachment_type)// optional
+
+//C_POINTER($2)  //a_mndrl_glbl_mrg
+//C_POINTER($3)  //a_mndrl_glbl_mrg_content
+
+C_LONGINT($response_code)
+C_BOOLEAN($PHP_Ok)
+C_TEXT($environment;$dev_mail_to;$packet)
+
+$Lf:=Char(Line feed)
+
+If (OB Is defined($o_params;"template_name"))
+$mndrl_template:=OB Get($o_params;"template_name")
+If (OB Is defined($o_params;"html"))
+$mndrl_html:=OB Get($o_params;"html")
+If (OB Is defined($o_params;"text"))
+$mndrl_text:=OB Get($o_params;"text")
+End if 
+End if 
+Else 
+OB SET($o_error;"template_name_error";True)
+End if 
+
+If (OB Is defined($o_params;"subject"))
+$mndrl_subject:=OB Get($o_params;"subject")
+Else 
+OB SET($o_error;"subject_error";True)
+End if 
+
+If (OB Is defined($o_params;"email"))
+$mndrl_email:=OB Get($o_params;"email")
+Else 
+OB SET($o_error;"email_error";True)
+End if 
+
+// Optionals
+If (OB Is defined($o_params;"bcc_address"))
+$mndrl_bcc_address:=OB Get($o_params;"bcc_address")
+End if 
+If (OB Is defined($o_params;"Reply-To"))
+$mndrl_reply_to:=OB Get($o_params;"Reply-To")
+End if 
+If (OB Is defined($o_params;"attachment_content"))
+$mndrl_b64_attachment:=OB Get($o_params;"attachment_content")
+// if attachments; name and file-type are also required
+If (OB Is defined($o_params;"attachment_type"))
+$mndrl_attachment_type:=OB Get($o_params;"attachment_type")
+Else 
+OB SET($o_error;"attachment_type_error";True)
+End if 
+If (OB Is defined($o_params;"attachment_name"))
+$mndrl_attachment_filename:=OB Get($o_params;"attachment_name")
+Else 
+OB SET($o_error;"attachment_name_error";True)
+End if 
+
+End if 
+$Continue:=Not(OB Is defined($o_error))
+
+End if //END OF Declarations and initialization of variables
+
+If (Not($Continue))// Exit then
+$0:=False
+
+Else 
+
+$environment:=OB Get(_mndrl_get_config ;"environment")
+
+If ($environment#"production")
+$key_to_get:="api_key_dev"
+Else 
+$key_to_get:="api_key"
+End if 
+
+// template_content: Backwards compatbility: Requirement in the template
+ARRAY OBJECT($ao_template_content;0)
+OB SET($o_template_content;\
+"name";"Template content Dummy";\
+"content";"We need at least 1 template content to support backwards compatibility.")
+APPEND TO ARRAY($ao_template_content;$o_template_content)
+
+// message
+OB SET($o_message;"subject";$mndrl_subject)
+OB SET($o_message;"from_email";OB Get(_mndrl_get_config ;"mail_from"))
+OB SET($o_message;"from_name";OB Get(_mndrl_get_config ;"from_name"))
+
+// to
+If ($environment#"production")// NOT PRODUCTION: change email recipients to DEV MAIL
+$dev_mail_to:=OB Get(_mndrl_get_config ;"dev_mail_to")
+$mndrl_email:=$dev_mail_to
+End if 
+ARRAY OBJECT($ao_to;0)
+OB SET($o_to;"email";$mndrl_email)
+APPEND TO ARRAY($ao_to;$o_to)
+OB SET ARRAY($o_message;"to";$ao_to)
+
+// headers
+If ($mndrl_reply_to="")
+$mndrl_reply_to:=OB Get(_mndrl_get_config ;"mail_from")
+End if 
+OB SET($o_headers;"Reply-to";$mndrl_reply_to)
+OB SET($o_message;"headers";$o_headers)
+
+// html and css
+If (Length($mndrl_html)>0)
+OB SET($o_message;"html";$mndrl_html)
+If (Length($mndrl_text)>0)
+OB SET($o_message;"text";$mndrl_text)
+End if 
+End if 
+
+// bcc
+If ($environment="production")// Only send bcc in Production
+OB SET($o_message;"bcc_address";$mndrl_bcc_address)
+End if 
+
+// attachments
+If (Length($mndrl_b64_attachment)>0)
+ARRAY OBJECT($ao_attachments;0)
+OB SET($o_attachments;"content";$mndrl_b64_attachment;\
+"type";$mndrl_attachment_type;\
+"name";$mndrl_attachment_filename)
+APPEND TO ARRAY($ao_attachments;$o_attachments)
+If (Size of array($ao_attachments)>0)
+OB SET ARRAY($o_message;"attachments";$ao_attachments)
+End if 
+End if 
+
+// merge-language
+OB SET($o_message;"merge_language";"handlebars")
+
+// Buid JSON for Mandrill Request. https://mandrillapp.com/api/docs/messages.JSON.html#method=send-template
+OB SET($o_request;"key";OB Get(_mndrl_get_config ;$key_to_get))// Be sure to use a Mandril Key TEST for non production
+OB SET($o_request;"template_name";$mndrl_template)
+OB SET ARRAY($o_request;"template_content";$ao_template_content)
+OB SET($o_request;"message";$o_message)
+
+$response_code:=HTTP Request(HTTP post method;"https://mandrillapp.com/api/1.0/messages/send-template.json";$o_request;$response)
+SET TEXT TO PASTEBOARD($response)
+
+// Create a log
+$current_date:=Current date
+$current_time:=Current time
+$year:=String(Year of($current_date);"0000")
+$month:=String(Month of($current_date);"00")
+$day:=String(Day of($current_date);"00")
+$hour:=String($current_time\3600;"00")
+$log_filename:="log_"+$year+$month+$day+$hour+".txt"
+
+$log_path:=System folder(Desktop)+"_4D_Cache"+Folder separator+"Mandrill"
+If (Test path name($log_path)#Is a folder)
+CREATE FOLDER($log_path)
+End if 
+
+$cache_path:=$log_path+Folder separator+OB Get(_mndrl_get_config ;"from_name")
+If (Test path name($cache_path)#Is a folder)
+CREATE FOLDER($cache_path)
+End if 
+
+$log_path:=$cache_path+Folder separator+$log_filename
+If (Test path name($log_path)#Is a document)
+$doc_ref:=Create document($log_path)
+Else 
+$doc_ref:=Append document($log_path)
+End if 
+
+If (OK=1)// Append doc and Create Doc OK
+
+$packet:="response: "+String($response_code)+": "+$Lf+$response
+
+If ($response_code#200)
+$packet:=$packet+$Lf+"request:"+$Lf+JSON Stringify($o_request)+$Lf
+$packet:=$packet+JSON Stringify array($ao_to)
+End if 
+
+$packet:=$packet+$Lf+"------------------------"+$Lf// Line break between each log
+
+SEND PACKET($doc_ref;$packet)// Append a string
+CLOSE DOCUMENT($doc_ref)// Close the document
+End if 
+
+If ($response_code=200)// Sent
+$0:=True
+End if 
+
+End if 
