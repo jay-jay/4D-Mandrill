@@ -11,7 +11,7 @@ OB SET($o_params;"email";"james@lex.no")
 OB SET($o_params;"subject";"James tester")
 
   // choice either or both html and text (advisable: both should populated to cater all mail clients)
-  //OB SET($o_params;"html";"<h1>Hi</h1><p>James tester mandrill komponent. This is the body<p>")
+  //OB SET($o_params;"html";"```<h1>Hi</h1><p>James tester mandrill komponent. This is the body<p>```")
   // optional
   //OB SET($o_params;"text";"James tester mandrill komponent. This is the body")
   // optional (This will disregard html and text. This is an advanced mail sending using Mandrill templates.)
