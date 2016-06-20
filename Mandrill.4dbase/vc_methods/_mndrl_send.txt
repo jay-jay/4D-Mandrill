@@ -1,4 +1,4 @@
-//%attributes = {"lang":"en"} comment added and reserved by 4D.
+//%attributes = {"lang":"en","shared":true} comment added and reserved by 4D.
 If (False)//Description
 // ----------------------------------------------------
 // Developer: James Borillo
@@ -23,11 +23,15 @@ C_OBJECT($o_to)
 C_OBJECT($o_headers)
 C_OBJECT($o_attachments)
 
+C_TEXT($mndrl_template)// optional
 C_TEXT($mndrl_html)// optional
 C_TEXT($mndrl_text)// optional
+C_TEXT($mndrl_merge_language)// optional
 
 C_TEXT($mndrl_subject)
 C_TEXT($mndrl_email)
+C_TEXT($mndrl_from_email)// optional. It will use config email if empty
+C_TEXT($mndrl_from_name)// optional. It will use config name if empty
 C_TEXT($mndrl_bcc_address)// optional
 C_TEXT($mndrl_reply_to)// optional
 C_TEXT($mndrl_b64_attachment)// optional
@@ -39,15 +43,14 @@ C_TEXT($mndrl_attachment_type)// optional
 
 C_LONGINT($response_code)
 C_BOOLEAN($PHP_Ok)
-C_TEXT($environment;$dev_mail_to;$packet)
+C_TEXT($environment;$dev_mail_to;$packet;$rest_url)
 
 $Lf:=Char(Line feed)
 
-If (OB Is defined($o_params;"html"))
-$mndrl_html:=OB Get($o_params;"html")
-If (OB Is defined($o_params;"text"))
-$mndrl_text:=OB Get($o_params;"text")
-End if 
+If (OB Is defined($o_params;"email"))
+$mndrl_email:=OB Get($o_params;"email")
+Else 
+OB SET($o_error;"email_error";True)
 End if 
 
 If (OB Is defined($o_params;"subject"))
@@ -56,13 +59,40 @@ Else
 OB SET($o_error;"subject_error";True)
 End if 
 
-If (OB Is defined($o_params;"email"))
-$mndrl_email:=OB Get($o_params;"email")
-Else 
-OB SET($o_error;"email_error";True)
+// At least one of these (template, html and css)
+If (OB Is defined($o_params;"template_name"))
+$mndrl_template:=OB Get($o_params;"template_name")
 End if 
 
+If (OB Is defined($o_params;"html"))
+$mndrl_html:=OB Get($o_params;"html")
+End if 
+
+If (OB Is defined($o_params;"text"))
+$mndrl_text:=OB Get($o_params;"text")
+End if 
+
+If (OB Is defined($o_params;"merge_language"))
+$mndrl_merge_language:=OB Get($o_params;"merge_language")
+End if 
+
+// Check if at least there is a template and/or html and text
+Case of 
+: (Length($mndrl_template)>0)// Ok
+: (Length($mndrl_html)>0)// Ok
+: (Length($mndrl_text)>0)// Ok
+Else 
+OB SET($o_error;"body_error";"At least you have a template or html and/or text for your email body")
+End case 
+
+
 // Optionals
+If (OB Is defined($o_params;"from_email"))
+$mndrl_from_email:=OB Get($o_params;"from_email")
+If (OB Is defined($o_params;"from_name"))
+$mndrl_from_name:=OB Get($o_params;"from_name")
+End if 
+End if 
 If (OB Is defined($o_params;"bcc_address"))
 $mndrl_bcc_address:=OB Get($o_params;"bcc_address")
 End if 
@@ -101,17 +131,15 @@ Else
 $key_to_get:="api_key"
 End if 
 
-// template_content: Backwards compatbility: Requirement in the template
-ARRAY OBJECT($ao_template_content;0)
-OB SET($o_template_content;\
-"name";"Template content Dummy";\
-"content";"We need at least 1 template content to support backwards compatibility.")
-APPEND TO ARRAY($ao_template_content;$o_template_content)
-
 // message
 OB SET($o_message;"subject";$mndrl_subject)
+If (Length($mndrl_from_email)>0)
+OB SET($o_message;"from_email";$mndrl_from_email)
+OB SET($o_message;"from_name";$mndrl_from_name)
+Else // Use config values
 OB SET($o_message;"from_email";OB Get(_mndrl_get_config ;"mail_from"))
 OB SET($o_message;"from_name";OB Get(_mndrl_get_config ;"from_name"))
+End if 
 
 // to
 If ($environment#"production")// NOT PRODUCTION: change email recipients to DEV MAIL
@@ -130,12 +158,14 @@ End if
 OB SET($o_headers;"Reply-to";$mndrl_reply_to)
 OB SET($o_message;"headers";$o_headers)
 
-// html and css
+// html
 If (Length($mndrl_html)>0)
 OB SET($o_message;"html";$mndrl_html)
+End if 
+
+// text
 If (Length($mndrl_text)>0)
 OB SET($o_message;"text";$mndrl_text)
-End if 
 End if 
 
 // bcc
@@ -156,14 +186,30 @@ End if
 End if 
 
 // merge-language
+If (Length($mndrl_merge_language)>0)
+OB SET($o_message;"merge_language";$mndrl_merge_language)
+Else 
 OB SET($o_message;"merge_language";"handlebars")
+End if 
 
 // Buid JSON for Mandrill Request. https://mandrillapp.com/api/docs/messages.JSON.html#method=send-template
 OB SET($o_request;"key";OB Get(_mndrl_get_config ;$key_to_get))// Be sure to use a Mandril Key TEST for non production
+If (Length($mndrl_template)>0)// Use template
+// template_content: Backwards compatbility: Requirement in the template
+ARRAY OBJECT($ao_template_content;0)
+OB SET($o_template_content;\
+"name";"Template content Dummy";\
+"content";"We need at least 1 template content to support backwards compatibility.")
+APPEND TO ARRAY($ao_template_content;$o_template_content)
+OB SET($o_request;"template_name";$mndrl_template)
+OB SET ARRAY($o_request;"template_content";$ao_template_content)
+$rest_url:="https://mandrillapp.com/api/1.0/messages/send-template.json"
+Else 
+$rest_url:="https://mandrillapp.com/api/1.0/messages/send.json"
+End if 
 OB SET($o_request;"message";$o_message)
 
-$response_code:=HTTP Request(HTTP post method;"https://mandrillapp.com/api/1.0/messages/send.json";$o_request;$response)
-SET TEXT TO PASTEBOARD($response)
+$response_code:=HTTP Request(HTTP post method;$rest_url;$o_request;$response)
 
 // Create a log
 $current_date:=Current date
