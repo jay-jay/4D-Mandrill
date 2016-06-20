@@ -1,4 +1,4 @@
-//%attributes = {"lang":"en"} comment added and reserved by 4D.
+//%attributes = {"lang":"en","shared":true} comment added and reserved by 4D.
 If (False)//Description
 // ----------------------------------------------------
 // Developer: James Borillo
