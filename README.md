@@ -11,7 +11,7 @@ C_OBJECT($o_params)
 OB SET($o_params;"email";"james@mymail.com")
 OB SET($o_params;"subject";"James tester")
 
-//choice either or both html and text (advisable: both should populated to cater all mail clients)
+//choice either or both html and text (advisable: both html and text should be populated to cater all mail clients)
 OB SET($o_params;"html";"<h1>Hi</h1><p>This is a mail in html<p>")
 //optional
 OB SET($o_params;"text";"This is the text body of the mail. A good alternate for mail clients that can't parse html")
