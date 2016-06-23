@@ -22,11 +22,16 @@ OB SET($o_params;"template_name";"My Mandrill Template")
 OB SET($o_params;"from_email";"mail@verified.com") // From mail should be a verified domain in Mandrill or else mail won't send
 OB SET($o_params;"from_name";"Beautiful name")
 OB SET($o_params;"merge_language";"handlebars") // default: handlebars (you can use mailchimp merge_language too)
-OB SET($o_params;"Reply-To";"")
-OB SET($o_params;"bcc_address";"bccemail@mail.com")
+OB SET($o_params;"Reply-To";"") // if empty, from_email will be used instead
+OB SET($o_params;"bcc_address";"bccemail@mail.com") // cc is not advisable because all recipients will see each other's email addresses
 OB SET($o_params;"attachment_content";$file_in_base64) // use _mndrl_base64_encode to cleanup your base64 file
 OB SET($o_params;"attachment_type";"application/pdf")
 OB SET($o_params;"attachment_name";$Filename+".pdf")
 
 $sent:=_mndrl_send ($o_params)
 ```
+
+####Roadmap
+- multiple "to" recipients in single REST request
+- multiple attachments
+- merge functionality (dynamic data in a Mandrill template)
