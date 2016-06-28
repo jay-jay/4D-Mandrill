@@ -26,7 +26,7 @@ OB SET($o_params;"Reply-To";"") // if empty, from_email will be used instead
 OB SET($o_params;"bcc_address";"bccemail@mail.com") // cc is not advisable because all recipients will see each other's email addresses
 OB SET($o_params;"attachment_content";$file_in_base64) // use _mndrl_base64_encode to cleanup your base64 file
 OB SET($o_params;"attachment_type";"application/pdf")
-OB SET($o_params;"attachment_name";$Filename+".pdf")
+OB SET($o_params;"attachment_name";"Filename.pdf")
 
 $sent:=_mndrl_send ($o_params)
 ```
