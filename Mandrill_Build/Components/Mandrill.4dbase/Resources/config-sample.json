@@ -1,0 +1,5 @@
+{
+	"mail_from"   : "you@mail.com",
+	"api_key_dev" : "YOUR-MANDRILL-API-KEY",
+	"api_key"     : "YOUR-MANDRILL-TEST-API-KEY"
+}
