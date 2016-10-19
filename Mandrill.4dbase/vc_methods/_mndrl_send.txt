@@ -192,6 +192,15 @@ Else
 OB SET($o_message;"merge_language";"handlebars")
 End if 
 
+If (OB Is defined($o_params;"global_merge_vars"))
+
+ARRAY OBJECT($ao_global_merge;0)
+OB GET ARRAY($o_params;"global_merge_vars";$ao_global_merge)
+
+OB SET ARRAY($o_message;"global_merge_vars";$ao_global_merge)
+End if 
+
+
 // Buid JSON for Mandrill Request. https://mandrillapp.com/api/docs/messages.JSON.html#method=send-template
 OB SET($o_request;"key";OB Get(_mndrl_get_config ;$key_to_get))// Be sure to use a Mandril Key TEST for non production
 If (Length($mndrl_template)>0)// Use template
