@@ -50,5 +50,4 @@ $sent:=_mndrl_send ($o_params)
 ####Roadmap
 - multiple "to" recipients in a single REST request
 - multiple attachments
-- merge functionality (dynamic data in a Mandrill template)
 - schedule when to send email (good for marketing)
