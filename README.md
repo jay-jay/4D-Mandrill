@@ -21,12 +21,28 @@ OB SET($o_params;"template_name";"My Mandrill Template")
 // Optional 
 OB SET($o_params;"from_email";"mail@verified.com") // From mail should be a verified domain in Mandrill or else mail won't send
 OB SET($o_params;"from_name";"Beautiful name")
-OB SET($o_params;"merge_language";"handlebars") // default: handlebars (you can use mailchimp merge_language too)
 OB SET($o_params;"Reply-To";"") // if empty, from_email will be used instead
 OB SET($o_params;"bcc_address";"bccemail@mail.com") // cc is not advisable because all recipients will see each other's email addresses
 OB SET($o_params;"attachment_content";$file_in_base64) // use _mndrl_base64_encode to cleanup your base64 file
 OB SET($o_params;"attachment_type";"application/pdf")
 OB SET($o_params;"attachment_name";"Filename.pdf")
+
+// Dynamic Data in Mandrill Template (A template that handles dynamic data is required)
+OB SET($o_params;"merge_language";"handlebars") // default: handlebars (you can use mailchimp merge_language too)
+ARRAY OBJECT($ao_global_merge;0)
+C_OBJECT($o_global_merge)
+
+// Add First dynamic data
+OB SET($o_global_merge;"name";"url_receipt";"content";"http://www.jamesborillo.com/receipt/12345.html")
+$a_ref:=OB Copy($o_global_merge)
+APPEND TO ARRAY($ao_global_merge;$a_ref)
+
+// Add second dynamic data
+OB SET($o_global_merge;"name";"recipient_name";"content";"John Doe")
+$a_ref:=OB Copy($o_global_merge)
+APPEND TO ARRAY($ao_global_merge;$a_ref)
+
+OB SET ARRAY($o_params;"global_merge_vars";$ao_global_merge)
 
 $sent:=_mndrl_send ($o_params)
 ```
@@ -34,5 +50,4 @@ $sent:=_mndrl_send ($o_params)
 ####Roadmap
 - multiple "to" recipients in a single REST request
 - multiple attachments
-- merge functionality (dynamic data in a Mandrill template)
 - schedule when to send email (good for marketing)
