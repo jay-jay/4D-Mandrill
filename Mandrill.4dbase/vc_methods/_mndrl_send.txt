@@ -79,16 +79,31 @@ Else
 OB SET($o_error;"body_error";"At least you have a template or html and/or text for your email body")
 End case 
 
+If (Length($mndrl_template)>0)
 
-// Optionals
-If (OB Is defined($o_params;"subject"))
-$mndrl_subject:=OB Get($o_params;"subject")
-End if 
 If (OB Is defined($o_params;"from_email"))
 $mndrl_from_email:=OB Get($o_params;"from_email")
 If (OB Is defined($o_params;"from_name"))
 $mndrl_from_name:=OB Get($o_params;"from_name")
 End if 
+End if 
+
+Else // No-template therefore from_email is required
+
+If (OB Is defined($o_params;"from_email"))
+$mndrl_from_email:=OB Get($o_params;"from_email")
+If (OB Is defined($o_params;"from_name"))
+$mndrl_from_name:=OB Get($o_params;"from_name")
+End if 
+Else 
+OB SET($o_error;"from_email_error";"From email is required when sending without a template.")
+End if 
+
+End if 
+
+// Optionals
+If (OB Is defined($o_params;"subject"))
+$mndrl_subject:=OB Get($o_params;"subject")
 End if 
 If (OB Is defined($o_params;"bcc_address"))
 $mndrl_bcc_address:=OB Get($o_params;"bcc_address")
@@ -132,12 +147,10 @@ End if
 If (Length($mndrl_subject)>0)
 OB SET($o_message;"subject";$mndrl_subject)
 End if 
+
 If (Length($mndrl_from_email)>0)
 OB SET($o_message;"from_email";$mndrl_from_email)
 OB SET($o_message;"from_name";$mndrl_from_name)
-Else // Use config values
-OB SET($o_message;"from_email";OB Get(_mndrl_get_config ;"mail_from"))
-OB SET($o_message;"from_name";OB Get(_mndrl_get_config ;"from_name"))
 End if 
 
 // to
