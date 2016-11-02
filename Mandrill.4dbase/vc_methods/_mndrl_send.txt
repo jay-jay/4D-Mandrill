@@ -151,10 +151,10 @@ APPEND TO ARRAY($ao_to;$o_to)
 OB SET ARRAY($o_message;"to";$ao_to)
 
 // headers
-If ($mndrl_reply_to="")
-$mndrl_reply_to:=OB Get(_mndrl_get_config ;"mail_from")
-End if 
+If ($mndrl_reply_to#"")
 OB SET($o_headers;"Reply-to";$mndrl_reply_to)
+End if 
+
 OB SET($o_message;"headers";$o_headers)
 
 // html
