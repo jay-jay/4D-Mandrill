@@ -50,7 +50,7 @@ $Lf:=Char(Line feed)
 If (OB Is defined($o_params;"email"))
 $mndrl_email:=OB Get($o_params;"email")
 Else 
-OB SET($o_error;"email_error";True)
+OB SET($o_error;"email_error";"email is required")
 End if 
 
 // At least one of these (template, html and css)
@@ -120,12 +120,12 @@ $mndrl_b64_attachment:=OB Get($o_params;"attachment_content")
 If (OB Is defined($o_params;"attachment_type"))
 $mndrl_attachment_type:=OB Get($o_params;"attachment_type")
 Else 
-OB SET($o_error;"attachment_type_error";True)
+OB SET($o_error;"attachment_type_error";"Attachment type must be specified")
 End if 
 If (OB Is defined($o_params;"attachment_name"))
 $mndrl_attachment_filename:=OB Get($o_params;"attachment_name")
 Else 
-OB SET($o_error;"attachment_name_error";True)
+OB SET($o_error;"attachment_name_error";"Attachment name must be specified")
 End if 
 
 End if 
@@ -134,6 +134,7 @@ $Continue:=Not(OB Is defined($o_error))
 End if //END OF Declarations and initialization of variables
 
 If (Not($Continue))// Exit then
+$log_insert:="ERROR: "+JSON Stringify($o_error)
 $0:=False
 
 Else 
@@ -235,6 +236,18 @@ OB SET($o_request;"message";$o_message)
 
 $response_code:=HTTP Request(HTTP post method;$rest_url;$o_request;$response)
 
+If ($response_code=200)// Sent
+$0:=True
+End if 
+
+$log_insert:="response: "+String($response_code)+": "+$Lf+$response
+If ($response_code#200)
+$log_insert:=$log_insert+$Lf+"request:"+$Lf+JSON Stringify($o_request)+$Lf
+$log_insert:=$log_insert+JSON Stringify array($ao_to)
+End if 
+
+End if 
+
 // Create a log
 $current_date:=Current date
 $current_time:=Current time
@@ -263,21 +276,10 @@ End if
 
 If (OK=1)// Append doc and Create Doc OK
 
-$packet:="response: "+String($response_code)+": "+$Lf+$response
-
-If ($response_code#200)
-$packet:=$packet+$Lf+"request:"+$Lf+JSON Stringify($o_request)+$Lf
-$packet:=$packet+JSON Stringify array($ao_to)
-End if 
-
+$packet:=$log_insert
 $packet:=$packet+$Lf+"------------------------"+$Lf// Line break between each log
 
 SEND PACKET($doc_ref;$packet)// Append a string
 CLOSE DOCUMENT($doc_ref)// Close the document
 End if 
 
-If ($response_code=200)// Sent
-$0:=True
-End if 
-
-End if 
