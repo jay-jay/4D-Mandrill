@@ -9,16 +9,16 @@ Mandrill for 4D (Mailchimp's transactional email service)
 C_OBJECT($o_params)
 
 OB SET($o_params;"email";"james@mymail.com")
-OB SET($o_params;"subject";"James tester")
 
 //choice either or both html and text (advisable: both html and text should be populated to cater all mail clients)
 OB SET($o_params;"html";"<h1>Hi</h1><p>This is a mail in html<p>")
 //optional
 OB SET($o_params;"text";"This is the text body of the mail. A good alternate for mail clients that can't parse html")
-// optional (This will disregard html and text. This is an advanced mail sending using Mandrill templates.)
+// optional (This will disregard html. This is an advanced mail sending using Mandrill templates. Can be used together with text)
 OB SET($o_params;"template_name";"My Mandrill Template")
 
 // Optional 
+OB SET($o_params;"subject";"James tester")
 OB SET($o_params;"from_email";"mail@verified.com") // From mail should be a verified domain in Mandrill or else mail won't send
 OB SET($o_params;"from_name";"Beautiful name")
 OB SET($o_params;"Reply-To";"") // if empty, from_email will be used instead
