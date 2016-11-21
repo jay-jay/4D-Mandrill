@@ -134,7 +134,7 @@ $Continue:=Not(OB Is defined($o_error))
 End if //END OF Declarations and initialization of variables
 
 If (Not($Continue))// Exit then
-$log_insert:="ERROR: "+JSON Stringify($o_error)
+$log_insert:="ERROR: "+JSON Stringify($o_error)+$Lf+"Request: "+JSON Stringify($o_params)
 $0:=False
 
 Else 
