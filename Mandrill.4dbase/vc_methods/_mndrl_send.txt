@@ -90,14 +90,17 @@ End if
 
 Else // No-template therefore from_email is required
 
-If (OB Is defined($o_params;"from_email"))
+Case of 
+: (OB Is defined($o_params;"from_email"))
 $mndrl_from_email:=OB Get($o_params;"from_email")
 If (OB Is defined($o_params;"from_name"))
 $mndrl_from_name:=OB Get($o_params;"from_name")
 End if 
+: (OB Is defined(_mndrl_get_config ;"from_email"))
+$mndrl_from_email:=OB Get(_mndrl_get_config ;"from_email")
 Else 
 OB SET($o_error;"from_email_error";"From email is required when sending without a template.")
-End if 
+End case 
 
 End if 
 
