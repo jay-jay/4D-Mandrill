@@ -1,5 +1,8 @@
 {
-	"mail_from"   : "you@mail.com",
-	"api_key_dev" : "YOUR-MANDRILL-API-KEY",
-	"api_key"     : "YOUR-MANDRILL-TEST-API-KEY"
+	"environment" : "production",
+	"from_email"  : "me@jamesborillo.com",
+	"from_name"   : "James Bie",
+	"api_key_dev" : "YOUR-DEV-API-KEY",
+	"api_key"     : "YOUR-PRODUCTION-API-KEY",
+	"dev_mail_to" : "me@jamesborillo.com"
 }
