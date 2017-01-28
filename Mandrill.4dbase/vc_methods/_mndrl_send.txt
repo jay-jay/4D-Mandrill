@@ -257,7 +257,7 @@ $day:=String(Day of($current_date);"00")
 $hour:=String($current_time\3600;"00")
 $log_filename:="log_"+$year+$month+$day+$hour+".txt"
 
-$log_path:=Get 4D folder(Logs folder)+"Mandrill"
+$log_path:=Get 4D folder(Logs folder;*)+"Mandrill"
 If (Test path name($log_path)#Is a folder)
 CREATE FOLDER($log_path)
 End if 
