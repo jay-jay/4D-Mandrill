@@ -257,17 +257,12 @@ $day:=String(Day of($current_date);"00")
 $hour:=String($current_time\3600;"00")
 $log_filename:="log_"+$year+$month+$day+$hour+".txt"
 
-$log_path:=Get 4D folder(Logs folder;*)+"Mandrill"
-If (Test path name($log_path)#Is a folder)
-CREATE FOLDER($log_path)
+$log_dir:=Get 4D folder(Logs folder;*)+"Mandrill"
+If (Test path name($log_dir)#Is a folder)
+CREATE FOLDER($log_dir)
 End if 
 
-$cache_path:=$log_path+Folder separator+OB Get(_mndrl_get_config ;"from_name")
-If (Test path name($cache_path)#Is a folder)
-CREATE FOLDER($cache_path)
-End if 
-
-$log_path:=$cache_path+Folder separator+$log_filename
+$log_path:=$log_dir+Folder separator+$log_filename
 If (Test path name($log_path)#Is a document)
 $doc_ref:=Create document($log_path)
 Else 
