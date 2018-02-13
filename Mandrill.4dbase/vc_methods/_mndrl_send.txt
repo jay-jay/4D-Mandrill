@@ -141,6 +141,10 @@ Else
 
 $environment:=OB Get(_mndrl_get_config ;"environment")
 
+If ($environment#"production")// NOT PRODUCTION: change email recipients to DEV MAIL
+$dev_mail_to:=OB Get(_mndrl_get_config ;"dev_mail_to")
+End if 
+
 If ($environment#"production")
 $key_to_get:="api_key_dev"
 Else 
@@ -158,12 +162,14 @@ OB SET($o_message;"from_name";$mndrl_from_name)
 End if 
 
 // to
-If ($environment#"production")// NOT PRODUCTION: change email recipients to DEV MAIL
-$dev_mail_to:=OB Get(_mndrl_get_config ;"dev_mail_to")
-$mndrl_email:=$dev_mail_to
-End if 
 ARRAY OBJECT($ao_to;0)
+
+If ($environment#"production")
+OB SET($o_to;"email";$dev_mail_to)
+Else 
 OB SET($o_to;"email";$mndrl_email)
+End if 
+
 APPEND TO ARRAY($ao_to;$o_to)
 OB SET ARRAY($o_message;"to";$ao_to)
 
@@ -187,6 +193,8 @@ End if
 // bcc
 If ($environment="production")// Only send bcc in Production
 OB SET($o_message;"bcc_address";$mndrl_bcc_address)
+Else 
+OB SET($o_message;"bcc_address";$dev_mail_to)
 End if 
 
 // attachments
