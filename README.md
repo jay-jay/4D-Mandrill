@@ -47,7 +47,7 @@ OB SET ARRAY($o_params;"global_merge_vars";$ao_global_merge)
 $sent:=_mndrl_send ($o_params)
 ```
 ####Deprecated
-Methods prefixed with "_mndrl" are now being deprecated.No further development will take place anymore with these methods. Start using the methods prefixed with "mandrill_"
+Methods prefixed with "\_mndrl" are now being deprecated.No further development will take place anymore with these methods. Start using the methods prefixed with "mandrill_"
 
 ####Roadmap
 - multiple "to" recipients in a single REST request
