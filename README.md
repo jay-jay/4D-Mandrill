@@ -8,7 +8,13 @@ Mandrill for 4D (Mailchimp's transactional email service)
 ```
 C_OBJECT($o_params)
 
-OB SET($o_params;"email";"james@mymail.com")
+// Recipient/s
+ARRAY TEXT($a_email;2)
+$a_email{1}:="james@mymail.com"
+$a_email{2}:="jb@mymail.com"
+OB SET ARRAY($o_params;"email";$a_email)
+// OR just as easy as passing an email string for sending single recipient
+// OB SET($o_params;"email";"james@mymail.com")
 
 //choice either or both html and text (advisable: both html and text should be populated to cater all mail clients)
 OB SET($o_params;"html";"<h1>Hi</h1><p>This is a mail in html<p>")
@@ -44,10 +50,10 @@ APPEND TO ARRAY($ao_global_merge;$a_ref)
 
 OB SET ARRAY($o_params;"global_merge_vars";$ao_global_merge)
 
-$sent:=_mndrl_send ($o_params)
+$sent:=mandrill_send ($o_params)
 ```
 ####Deprecated
-Methods prefixed with "\_mndrl" are now being deprecated.No further development will take place anymore with these methods. Start using the methods prefixed with "mandrill_"
+Methods prefixed with "\_mndrl" are now being deprecated. No further development will take place anymore with these methods. Start using the methods prefixed with "mandrill_"
 
 ####Roadmap
 - multiple "to" recipients in a single REST request
