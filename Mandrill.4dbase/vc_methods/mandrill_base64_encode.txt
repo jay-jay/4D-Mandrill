@@ -1,0 +1,20 @@
+//%attributes = {"lang":"en","shared":true} comment added and reserved by 4D.
+C_TEXT($0;$base64_string)
+C_BLOB($1)
+$CP:=Count parameters
+$Continue:=True
+
+If ($CP>=1)
+$Blob:=$1
+Else 
+$Continue:=False
+End if 
+
+If ($Continue)
+
+BASE64 ENCODE($Blob;$base64_string)
+$base64_string:=Replace string($base64_string;Char(Line feed);"")
+$base64_string:=Replace string($base64_string;Char(Carriage return);"")
+$0:=$base64_string
+
+End if 
