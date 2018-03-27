@@ -56,6 +56,5 @@ $sent:=mandrill_send ($o_params)
 Methods prefixed with "\_mndrl" are now being deprecated. No further development will take place anymore with these methods. Start using the methods prefixed with "mandrill_"
 
 ####Roadmap
-- multiple "to" recipients in a single REST request
 - multiple attachments
 - schedule when to send email (good for marketing)
