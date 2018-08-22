@@ -1,260 +1,260 @@
-//%attributes = {"lang":"en","shared":true} comment added and reserved by 4D.
-If (False)//Description
-// ----------------------------------------------------
-// Developer: James Borillo
-// Date and time: 13.05.2016 at 10:02
-// ----------------------------------------------------
-// 
+  //%attributes = {"shared":true,"lang":"en"} comment added and reserved by 4D.
+If (False)  //Description
+	  // ----------------------------------------------------
+	  // Developer: James Borillo
+	  // Date and time: 13.05.2016 at 10:02
+	  // ----------------------------------------------------
+	  // 
 End if 
 
-If (True)//Declarations and initialization of variables
-C_OBJECT($1)
-C_OBJECT($o_params)
-C_BOOLEAN($0)
-C_OBJECT($o_error)
-C_OBJECT($o_request)
-C_TEXT($response)
+If (True)  //Declarations and initialization of variables
+	C_OBJECT($1)
+	C_OBJECT($o_params)
+	C_BOOLEAN($0)
+	C_OBJECT($o_error)
+	C_OBJECT($o_request)
+	C_TEXT($response)
+	
+	$o_params:=$1
+	
+	C_OBJECT($o_template_content)
+	C_OBJECT($o_message)
+	C_OBJECT($o_to)
+	C_OBJECT($o_headers)
+	C_OBJECT($o_attachments)
+	
+	C_TEXT($mndrl_template)  // optional
+	C_TEXT($mndrl_html)  // optional
+	C_TEXT($mndrl_text)  // optional
+	C_TEXT($mndrl_merge_language)  // optional
+	
+	C_TEXT($mndrl_subject)  // optional
+	C_TEXT($mndrl_from_email)  // optional. It will use config email if empty
+	C_TEXT($mndrl_from_name)  // optional. It will use config name if empty
+	C_TEXT($mndrl_reply_to)  // optional
+	C_TEXT($mndrl_b64_attachment)  // optional
+	C_TEXT($mndrl_attachment_filename)  // optional
+	C_TEXT($mndrl_attachment_type)  // optional
+	
+	  //C_POINTER($2)  //a_mndrl_glbl_mrg
+	  //C_POINTER($3)  //a_mndrl_glbl_mrg_content
+	
+	C_LONGINT($response_code)
+	C_BOOLEAN($PHP_Ok)
+	C_TEXT($environment;$packet;$rest_url)
+	
+	$Lf:=Char(Line feed)
+	
+	If (OB Is defined($o_params;"email"))
+		  // We are just checking, parsing later
+	Else 
+		OB SET($o_error;"email_error";"email is required")
+	End if 
+	
+	  // At least one of these (template, html and css)
+	If (OB Is defined($o_params;"template_name"))
+		$mndrl_template:=OB Get($o_params;"template_name")
+	End if 
+	
+	If (OB Is defined($o_params;"html"))
+		$mndrl_html:=OB Get($o_params;"html")
+	End if 
+	
+	If (OB Is defined($o_params;"text"))
+		$mndrl_text:=OB Get($o_params;"text")
+	End if 
+	
+	If (OB Is defined($o_params;"merge_language"))
+		$mndrl_merge_language:=OB Get($o_params;"merge_language")
+	End if 
+	
+	  // Check if at least there is a template and/or html and text
+	Case of 
+		: (Length($mndrl_template)>0)  // Ok
+		: (Length($mndrl_html)>0)  // Ok
+		: (Length($mndrl_text)>0)  // Ok
+		Else 
+			OB SET($o_error;"body_error";"At least you have a template or html and/or text for your email body")
+	End case 
+	
+	If (Length($mndrl_template)>0)
+		
+		If (OB Is defined($o_params;"from_email"))
+			$mndrl_from_email:=OB Get($o_params;"from_email")
+			If (OB Is defined($o_params;"from_name"))
+				$mndrl_from_name:=OB Get($o_params;"from_name")
+			End if 
+		End if 
+		
+	Else   // No-template therefore from_email is required
+		
+		Case of 
+			: (OB Is defined($o_params;"from_email"))
+				$mndrl_from_email:=OB Get($o_params;"from_email")
+				If (OB Is defined($o_params;"from_name"))
+					$mndrl_from_name:=OB Get($o_params;"from_name")
+				End if 
+			: (OB Is defined(mandrill_get_config ;"from_email"))
+				$mndrl_from_email:=OB Get(mandrill_get_config ;"from_email")
+			Else 
+				OB SET($o_error;"from_email_error";"From email is required when sending without a template.")
+		End case 
+		
+	End if 
+	
+	  // Optionals
+	If (OB Is defined($o_params;"subject"))
+		$mndrl_subject:=OB Get($o_params;"subject")
+	End if 
+	If (OB Is defined($o_params;"Reply-To"))
+		$mndrl_reply_to:=OB Get($o_params;"Reply-To")
+	End if 
+	If (OB Is defined($o_params;"attachment_content"))
+		$mndrl_b64_attachment:=OB Get($o_params;"attachment_content")
+		  // if attachments; name and file-type are also required
+		If (OB Is defined($o_params;"attachment_type"))
+			$mndrl_attachment_type:=OB Get($o_params;"attachment_type")
+		Else 
+			OB SET($o_error;"attachment_type_error";"Attachment type must be specified")
+		End if 
+		If (OB Is defined($o_params;"attachment_name"))
+			$mndrl_attachment_filename:=OB Get($o_params;"attachment_name")
+		Else 
+			OB SET($o_error;"attachment_name_error";"Attachment name must be specified")
+		End if 
+		
+	End if 
+	$Continue:=Not(OB Is defined($o_error))
+	
+End if   //END OF Declarations and initialization of variables
 
-$o_params:=$1
-
-C_OBJECT($o_template_content)
-C_OBJECT($o_message)
-C_OBJECT($o_to)
-C_OBJECT($o_headers)
-C_OBJECT($o_attachments)
-
-C_TEXT($mndrl_template)// optional
-C_TEXT($mndrl_html)// optional
-C_TEXT($mndrl_text)// optional
-C_TEXT($mndrl_merge_language)// optional
-
-C_TEXT($mndrl_subject)// optional
-C_TEXT($mndrl_from_email)// optional. It will use config email if empty
-C_TEXT($mndrl_from_name)// optional. It will use config name if empty
-C_TEXT($mndrl_reply_to)// optional
-C_TEXT($mndrl_b64_attachment)// optional
-C_TEXT($mndrl_attachment_filename)// optional
-C_TEXT($mndrl_attachment_type)// optional
-
-//C_POINTER($2)  //a_mndrl_glbl_mrg
-//C_POINTER($3)  //a_mndrl_glbl_mrg_content
-
-C_LONGINT($response_code)
-C_BOOLEAN($PHP_Ok)
-C_TEXT($environment;$packet;$rest_url)
-
-$Lf:=Char(Line feed)
-
-If (OB Is defined($o_params;"email"))
-// We are just checking, parsing later
+If (Not($Continue))  // Exit then
+	$log_insert:="ERROR: "+JSON Stringify($o_error)+$Lf+"Request: "+JSON Stringify($o_params)
+	$0:=False
+	
 Else 
-OB SET($o_error;"email_error";"email is required")
+	
+	$environment:=OB Get(mandrill_get_config ;"environment")
+	If ($environment#"production")
+		$key_to_get:="api_key_dev"
+	Else 
+		$key_to_get:="api_key"
+	End if 
+	
+	  // message
+	If (Length($mndrl_subject)>0)
+		OB SET($o_message;"subject";$mndrl_subject)
+	End if 
+	
+	If (Length($mndrl_from_email)>0)
+		OB SET($o_message;"from_email";$mndrl_from_email)
+		OB SET($o_message;"from_name";$mndrl_from_name)
+	End if 
+	
+	  // to
+	ARRAY TEXT($a_to;0)
+	ARRAY OBJECT($ao_to;0)
+	
+	$email_type:=OB Get type($o_params;"email")
+	Case of 
+		: ($email_type=Is text)
+			OB SET($o_to;"email";OB Get($o_params;"email"))
+			APPEND TO ARRAY($ao_to;$o_to)
+			
+		: ($email_type=Is collection) | ($email_type=Object array)
+			OB GET ARRAY($o_params;"email";$a_to)
+			$ii:=Size of array($a_to)
+			For ($i;1;$ii)
+				OB SET($o_to;"email";$a_to{$i})
+				
+				$a_ref:=OB Copy($o_to)
+				APPEND TO ARRAY($ao_to;$a_ref)
+			End for 
+			
+			
+		Else 
+			
+	End case 
+	
+	OB SET ARRAY($o_message;"to";$ao_to)
+	
+	  // headers
+	If ($mndrl_reply_to#"")
+		OB SET($o_headers;"Reply-to";$mndrl_reply_to)
+	End if 
+	
+	OB SET($o_message;"headers";$o_headers)
+	
+	  // html
+	If (Length($mndrl_html)>0)
+		OB SET($o_message;"html";$mndrl_html)
+	End if 
+	
+	  // text
+	If (Length($mndrl_text)>0)
+		OB SET($o_message;"text";$mndrl_text)
+	End if 
+	
+	  // attachments
+	If (Length($mndrl_b64_attachment)>0)
+		ARRAY OBJECT($ao_attachments;0)
+		OB SET($o_attachments;"content";$mndrl_b64_attachment;\
+			"type";$mndrl_attachment_type;\
+			"name";$mndrl_attachment_filename)
+		APPEND TO ARRAY($ao_attachments;$o_attachments)
+		If (Size of array($ao_attachments)>0)
+			OB SET ARRAY($o_message;"attachments";$ao_attachments)
+		End if 
+	End if 
+	
+	  // merge-language
+	If (Length($mndrl_merge_language)>0)
+		OB SET($o_message;"merge_language";$mndrl_merge_language)
+	Else 
+		OB SET($o_message;"merge_language";"handlebars")
+	End if 
+	
+	If (OB Is defined($o_params;"global_merge_vars"))
+		
+		ARRAY OBJECT($ao_global_merge;0)
+		OB GET ARRAY($o_params;"global_merge_vars";$ao_global_merge)
+		
+		OB SET ARRAY($o_message;"global_merge_vars";$ao_global_merge)
+	End if 
+	
+	
+	  // Buid JSON for Mandrill Request. https://mandrillapp.com/api/docs/messages.JSON.html#method=send-template
+	OB SET($o_request;"key";OB Get(mandrill_get_config ;$key_to_get))  // Be sure to use a Mandril Key TEST for non production
+	If (Length($mndrl_template)>0)  // Use template
+		  // template_content: Backwards compatbility: Requirement in the template
+		ARRAY OBJECT($ao_template_content;0)
+		OB SET($o_template_content;\
+			"name";"Template content Dummy";\
+			"content";"We need at least 1 template content to support backwards compatibility.")
+		APPEND TO ARRAY($ao_template_content;$o_template_content)
+		OB SET($o_request;"template_name";$mndrl_template)
+		OB SET ARRAY($o_request;"template_content";$ao_template_content)
+		$rest_url:="https://mandrillapp.com/api/1.0/messages/send-template.json"
+	Else 
+		$rest_url:="https://mandrillapp.com/api/1.0/messages/send.json"
+	End if 
+	OB SET($o_request;"message";$o_message)
+	
+	$response_code:=HTTP Request(HTTP POST method;$rest_url;$o_request;$response)
+	
+	If ($response_code=200)  // Sent
+		$0:=True
+	End if 
+	
+	$log_insert:="response: "+String($response_code)+": "+$Lf+$response
+	If ($response_code#200)
+		$log_insert:=$log_insert+$Lf+"request:"+$Lf+JSON Stringify($o_request)+$Lf
+		$log_insert:=$log_insert+JSON Stringify array($ao_to)
+	End if 
+	
 End if 
 
-// At least one of these (template, html and css)
-If (OB Is defined($o_params;"template_name"))
-$mndrl_template:=OB Get($o_params;"template_name")
-End if 
-
-If (OB Is defined($o_params;"html"))
-$mndrl_html:=OB Get($o_params;"html")
-End if 
-
-If (OB Is defined($o_params;"text"))
-$mndrl_text:=OB Get($o_params;"text")
-End if 
-
-If (OB Is defined($o_params;"merge_language"))
-$mndrl_merge_language:=OB Get($o_params;"merge_language")
-End if 
-
-// Check if at least there is a template and/or html and text
-Case of 
-: (Length($mndrl_template)>0)// Ok
-: (Length($mndrl_html)>0)// Ok
-: (Length($mndrl_text)>0)// Ok
-Else 
-OB SET($o_error;"body_error";"At least you have a template or html and/or text for your email body")
-End case 
-
-If (Length($mndrl_template)>0)
-
-If (OB Is defined($o_params;"from_email"))
-$mndrl_from_email:=OB Get($o_params;"from_email")
-If (OB Is defined($o_params;"from_name"))
-$mndrl_from_name:=OB Get($o_params;"from_name")
-End if 
-End if 
-
-Else // No-template therefore from_email is required
-
-Case of 
-: (OB Is defined($o_params;"from_email"))
-$mndrl_from_email:=OB Get($o_params;"from_email")
-If (OB Is defined($o_params;"from_name"))
-$mndrl_from_name:=OB Get($o_params;"from_name")
-End if 
-: (OB Is defined(mandrill_get_config ;"from_email"))
-$mndrl_from_email:=OB Get(mandrill_get_config ;"from_email")
-Else 
-OB SET($o_error;"from_email_error";"From email is required when sending without a template.")
-End case 
-
-End if 
-
-// Optionals
-If (OB Is defined($o_params;"subject"))
-$mndrl_subject:=OB Get($o_params;"subject")
-End if 
-If (OB Is defined($o_params;"Reply-To"))
-$mndrl_reply_to:=OB Get($o_params;"Reply-To")
-End if 
-If (OB Is defined($o_params;"attachment_content"))
-$mndrl_b64_attachment:=OB Get($o_params;"attachment_content")
-// if attachments; name and file-type are also required
-If (OB Is defined($o_params;"attachment_type"))
-$mndrl_attachment_type:=OB Get($o_params;"attachment_type")
-Else 
-OB SET($o_error;"attachment_type_error";"Attachment type must be specified")
-End if 
-If (OB Is defined($o_params;"attachment_name"))
-$mndrl_attachment_filename:=OB Get($o_params;"attachment_name")
-Else 
-OB SET($o_error;"attachment_name_error";"Attachment name must be specified")
-End if 
-
-End if 
-$Continue:=Not(OB Is defined($o_error))
-
-End if //END OF Declarations and initialization of variables
-
-If (Not($Continue))// Exit then
-$log_insert:="ERROR: "+JSON Stringify($o_error)+$Lf+"Request: "+JSON Stringify($o_params)
-$0:=False
-
-Else 
-
-$environment:=OB Get(mandrill_get_config ;"environment")
-If ($environment#"production")
-$key_to_get:="api_key_dev"
-Else 
-$key_to_get:="api_key"
-End if 
-
-// message
-If (Length($mndrl_subject)>0)
-OB SET($o_message;"subject";$mndrl_subject)
-End if 
-
-If (Length($mndrl_from_email)>0)
-OB SET($o_message;"from_email";$mndrl_from_email)
-OB SET($o_message;"from_name";$mndrl_from_name)
-End if 
-
-// to
-ARRAY TEXT($a_to;0)
-ARRAY OBJECT($ao_to;0)
-
-$email_type:=OB Get type($o_params;"email")
-Case of 
-: ($email_type=Is text)
-OB SET($o_to;"email";OB Get($o_params;"email"))
-APPEND TO ARRAY($ao_to;$o_to)
-
-: ($email_type=Object array)
-OB GET ARRAY($o_params;"email";$a_to)
-$ii:=Size of array($a_to)
-For ($i;1;$ii)
-OB SET($o_to;"email";$a_to{$i})
-
-$a_ref:=OB Copy($o_to)
-APPEND TO ARRAY($ao_to;$a_ref)
-End for 
-
-
-Else 
-
-End case 
-
-OB SET ARRAY($o_message;"to";$ao_to)
-
-// headers
-If ($mndrl_reply_to#"")
-OB SET($o_headers;"Reply-to";$mndrl_reply_to)
-End if 
-
-OB SET($o_message;"headers";$o_headers)
-
-// html
-If (Length($mndrl_html)>0)
-OB SET($o_message;"html";$mndrl_html)
-End if 
-
-// text
-If (Length($mndrl_text)>0)
-OB SET($o_message;"text";$mndrl_text)
-End if 
-
-// attachments
-If (Length($mndrl_b64_attachment)>0)
-ARRAY OBJECT($ao_attachments;0)
-OB SET($o_attachments;"content";$mndrl_b64_attachment;\
-"type";$mndrl_attachment_type;\
-"name";$mndrl_attachment_filename)
-APPEND TO ARRAY($ao_attachments;$o_attachments)
-If (Size of array($ao_attachments)>0)
-OB SET ARRAY($o_message;"attachments";$ao_attachments)
-End if 
-End if 
-
-// merge-language
-If (Length($mndrl_merge_language)>0)
-OB SET($o_message;"merge_language";$mndrl_merge_language)
-Else 
-OB SET($o_message;"merge_language";"handlebars")
-End if 
-
-If (OB Is defined($o_params;"global_merge_vars"))
-
-ARRAY OBJECT($ao_global_merge;0)
-OB GET ARRAY($o_params;"global_merge_vars";$ao_global_merge)
-
-OB SET ARRAY($o_message;"global_merge_vars";$ao_global_merge)
-End if 
-
-
-// Buid JSON for Mandrill Request. https://mandrillapp.com/api/docs/messages.JSON.html#method=send-template
-OB SET($o_request;"key";OB Get(mandrill_get_config ;$key_to_get))// Be sure to use a Mandril Key TEST for non production
-If (Length($mndrl_template)>0)// Use template
-// template_content: Backwards compatbility: Requirement in the template
-ARRAY OBJECT($ao_template_content;0)
-OB SET($o_template_content;\
-"name";"Template content Dummy";\
-"content";"We need at least 1 template content to support backwards compatibility.")
-APPEND TO ARRAY($ao_template_content;$o_template_content)
-OB SET($o_request;"template_name";$mndrl_template)
-OB SET ARRAY($o_request;"template_content";$ao_template_content)
-$rest_url:="https://mandrillapp.com/api/1.0/messages/send-template.json"
-Else 
-$rest_url:="https://mandrillapp.com/api/1.0/messages/send.json"
-End if 
-OB SET($o_request;"message";$o_message)
-
-$response_code:=HTTP Request(HTTP post method;$rest_url;$o_request;$response)
-
-If ($response_code=200)// Sent
-$0:=True
-End if 
-
-$log_insert:="response: "+String($response_code)+": "+$Lf+$response
-If ($response_code#200)
-$log_insert:=$log_insert+$Lf+"request:"+$Lf+JSON Stringify($o_request)+$Lf
-$log_insert:=$log_insert+JSON Stringify array($ao_to)
-End if 
-
-End if 
-
-// Create a log
+  // Create a log
 $current_date:=Current date
 $current_time:=Current time
 $year:=String(Year of($current_date);"0000")
@@ -265,22 +265,22 @@ $log_filename:="log_"+$year+$month+$day+$hour+".txt"
 
 $log_dir:=Get 4D folder(Logs folder;*)+"Mandrill"
 If (Test path name($log_dir)#Is a folder)
-CREATE FOLDER($log_dir)
+	CREATE FOLDER($log_dir)
 End if 
 
 $log_path:=$log_dir+Folder separator+$log_filename
 If (Test path name($log_path)#Is a document)
-$doc_ref:=Create document($log_path)
+	$doc_ref:=Create document($log_path)
 Else 
-$doc_ref:=Append document($log_path)
+	$doc_ref:=Append document($log_path)
 End if 
 
-If (OK=1)// Append doc and Create Doc OK
-
-$packet:=$log_insert
-$packet:=$packet+$Lf+"------------------------"+$Lf// Line break between each log
-
-SEND PACKET($doc_ref;$packet)// Append a string
-CLOSE DOCUMENT($doc_ref)// Close the document
+If (OK=1)  // Append doc and Create Doc OK
+	
+	$packet:=$log_insert
+	$packet:=$packet+$Lf+"------------------------"+$Lf  // Line break between each log
+	
+	SEND PACKET($doc_ref;$packet)  // Append a string
+	CLOSE DOCUMENT($doc_ref)  // Close the document
 End if 
 
