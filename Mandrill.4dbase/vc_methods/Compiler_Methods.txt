@@ -1,0 +1,11 @@
+  //%attributes = {"invisible":true,"lang":"en"} comment added and reserved by 4D.
+C_OBJECT(_mndrl_get_config ;$0)
+C_BOOLEAN(_mndrl_send ;$0)
+C_OBJECT(_mndrl_send ;$1)
+C_TEXT(_mndrl_base64_encode ;$0)
+C_BLOB(_mndrl_base64_encode ;$1)
+C_BOOLEAN(mandrill_send ;$0)
+C_OBJECT(mandrill_send ;$1)
+C_TEXT(mandrill_base64_encode ;$0)
+C_BLOB(mandrill_base64_encode ;$1)
+C_OBJECT(mandrill_get_config ;$0)
