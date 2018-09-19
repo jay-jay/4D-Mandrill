@@ -14,6 +14,7 @@ If (True)  //Declarations and initialization of variables
 	C_OBJECT($o_error)
 	C_OBJECT($o_request)
 	C_TEXT($response)
+	C_LONGINT($max_iteration;$iteration)
 	
 	$o_params:=$1
 	
@@ -171,7 +172,6 @@ Else
 				APPEND TO ARRAY($ao_to;$a_ref)
 			End for 
 			
-			
 		Else 
 			
 	End case 
@@ -240,9 +240,13 @@ Else
 	End if 
 	OB SET($o_request;"message";$o_message)
 	
-	$response_code:=HTTP Request(HTTP POST method;$rest_url;$o_request;$response)
+	$max_iteration:=50  // To prevent infinite loop
+	While ($response_code#200) & ($iteration<=$max_iteration)
+		$response_code:=HTTP Request(HTTP POST method;$rest_url;$o_request;$response)
+		$iteration:=$iteration+1
+	End while 
 	
-	If ($response_code=200)  // Sent
+	If ($response_code=200)
 		$0:=True
 	End if 
 	
